@@ -9,17 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('audio', function (Blueprint $table) {
+        Schema::create('patientaddmcqs', function (Blueprint $table) {
             $table->id();
-            $table->string('nom_aud');
-            $table->string('prenom_aud');
-            $table->string('telephone_aud');
-            $table->string('photo_aud');
-            $table->string('email_aud');
-            // Ajoute d'autres colonnes si nécessaire
             $table->timestamps();
+
+            $table->unsignedBigInteger('id_mcq');
+            $table->foreign('id_mcq')->references('id')->on('mcqs');
+
+            $table->unsignedBigInteger('id_pat');
+            $table->foreign('id_pat')->references('id')->on('patients');
         });
     }
 
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('audio');
+        Schema::dropIfExists('patientaddmcq');
     }
 };

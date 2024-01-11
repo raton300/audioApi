@@ -39,6 +39,6 @@ class Authenticate
             return response('Unauthorized.', 401);
         }
 
-        return $next($request);
+        return 0 ;//$next($request);
     }
 }

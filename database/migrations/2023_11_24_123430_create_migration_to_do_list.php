@@ -9,17 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('audio', function (Blueprint $table) {
+        Schema::create('migration_to_do_list', function (Blueprint $table) {
             $table->id();
-            $table->string('nom_aud');
-            $table->string('prenom_aud');
-            $table->string('telephone_aud');
-            $table->string('photo_aud');
-            $table->string('email_aud');
-            // Ajoute d'autres colonnes si nécessaire
             $table->timestamps();
+            $table->string('text_tdl');
+            $table->unsignedBigInteger('id_ca');
+            $table->foreign('id_ca')->references('id')->on('centre_audio');
         });
     }
 
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('audio');
+        Schema::dropIfExists('migration_to_do_list');
     }
 };
