@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Audio;
+use App\Models\Calendar;
+use App\Models\NotePatientModel;
+use App\Models\PatientAddMCQ;
+use App\Models\PatientAppareil;
 use App\Models\Sponsorship;
 use Illuminate\Http\Request;
 use App\Models\Patient;
-
+use Laravel\Prompts\Note;
 
 
 class PatientController extends Controller
@@ -309,7 +313,188 @@ class PatientController extends Controller
         return response()->json($formattedPatients);
     }
 
+    public function showall($id_pat,$id_ca){
+         $patient = Patient::find($id_pat);
 
+         if ($patient->id_ca != $id_ca){
+             $result = "Impossible d'acceder au patient $patient->id";
+             return response()->json($result);
+         }
+
+
+         $creat =substr( $patient->created_at, 0, 10);
+         $creat = implode('/', array_reverse(explode('-',$creat)));
+
+         $patientInfo = [
+             'id_pat' => $patient->id,
+             'name_pat' => $patient->nom_pat,
+             'firstname_pat' => $patient->prenom_pat,
+             'phone_pat' => $patient->telephone_pat,
+             'address_pat' =>$patient->adresse_pat,
+             'email_pat' =>$patient->mail_pat,
+             'city_pat' =>$patient->ville_pat,
+             'postalCode_pat' =>$patient->cp_pat,
+             'creat_pat' =>$creat,
+         ];
+
+        $calendars = Calendar::where('id_pat', $id_pat)
+            ->orderBy('start_cal', 'desc')
+            ->get();
+
+        if ($calendars->isEmpty()){
+            $patientCalendars = ["Aucun RDV enregistré"];
+        }else{
+            foreach ($calendars as $calendar) {
+                $patientCalendars[] = [
+                    'id_cal' => $calendar->id,
+                    'start_cal'=> $calendar->start_cal,
+                    'category_cal'=> $calendar->categorie_cal,
+                    'condition_cal'=> $calendar->etat_cal,
+                    'cabinet' => $calendar->cabinet,
+                    'backgroundColor' => $calendar->backgroundColor,
+                ];
+
+            }
+        }
+
+
+        $appareil = PatientAppareil::with([
+            'stockAppareil:id,numero_serie,color_sa,sizeEarpiece_sa,id_app',
+            'stockAppareil.appareil:id,modele_app',
+        ])
+            ->where('id_pat', $id_pat)
+            ->first();
+
+        if ($appareil){
+            $creat = substr($appareil->created_at, 0, 10);
+            $creat = implode('/', array_reverse(explode('-', $creat)));
+            $appareil->stockAppareil->appareil->modele_app = str_replace('%20', ' ', $appareil->stockAppareil->appareil->modele_app);
+            $patientAppareil = [
+                'id_sa' => $appareil->id_sa,
+                'creat_sa' => $creat,
+                //'stockAppareil' => $appareil->stockAppareil,
+                'serialNumber_sa' => $appareil->stockAppareil->numero_serie,
+                'color_sa' => $appareil->stockAppareil->numero_serie,
+                'sizeEarpiece_sa' => $appareil->stockAppareil->sizeEarpiece_sa,
+                'modele_sa' => $appareil->stockAppareil->appareil->modele_app,
+            ];
+        }else{
+            $patientAppareil = ["Aucun appareil enregistré"];
+        }
+
+
+
+
+        $notes = NotePatientModel::where('id_pat', $id_pat)->get();
+
+        if ($notes->isEmpty()) {
+            $patientNotes = ["Aucune note enregistrée"];
+        } else {
+            foreach ($notes as $note) {
+                $creat = substr($note->created_at, 0, 10);
+                $creat = implode('/', array_reverse(explode('-', $creat)));
+
+                $update = $note->created_at != $note->updated_at;
+
+                $patientNotes[] = [
+                    'id_np' => $note->id,
+                    'content_np' => $note->content_np,
+                    'creat_np' => $creat,
+                    'update_np' => $update,
+                ];
+            }
+        }
+
+
+        $patientMcq = PatientAddMCQ::
+        where('id_pat',$id_pat)
+            ->with([
+                'title_mcq' => function ($query) {
+                    $query->select('id', 'title_mcq');
+                }
+            ])->get();
+
+        if ($patientMcq->isEmpty()){
+            $patientMcqs = ["Aucune QCM enregistré"];
+        }else{
+            $patientMcqs = $patientMcq->map(function ($patientMcq) {
+                return [
+                    'id_mcq' => $patientMcq->id,
+                    'title_mcq' => $patientMcq->title_mcq ? $patientMcq->title_mcq->title_mcq:null,
+                    'etat_mcq' => $patientMcq->etat_pam,
+                ];
+            });
+        }
+
+
+
+        $patientGodFather = Sponsorship::where('id_pat_parrain', $id_pat)
+            ->with([
+                'nameGodSon' => function ($query) {
+                    $query->select('id', 'nom_pat');
+                },
+                'firstnameGodSon' => function ($query) {
+                    $query->select('id', 'prenom_pat');
+                },
+                'idFilleul' => function ($query) {
+                    $query->select('id', 'id');
+                },
+            ])
+            ->get();
+
+        if ($patientGodFather->isEmpty()){
+            $patientGodFather = ["Aucun filleul enregistré"];
+        }else{
+            $patientGodFather = $patientGodFather->map(function ($patientGodFather) {
+                return [
+                    'id_filleul' => $patientGodFather->idFilleul ? $patientGodFather->idFilleul->id : null,
+                    'name_GodSon' => $patientGodFather->nameGodSon ? $patientGodFather->nameGodSon->nom_pat : null,
+                    'firstname_GodSon' => $patientGodFather->firstnameGodSon ? $patientGodFather->firstnameGodSon->prenom_pat : null,
+                ];
+            });
+        }
+
+
+        $patientGodSon = Sponsorship::where('id_pat_filleul', $id_pat)
+            ->with([
+                'nameGodFather' => function ($query) {
+                    $query->select('id', 'nom_pat');
+                },
+                'firstnameGodFather' => function ($query) {
+                    $query->select('id', 'prenom_pat');
+                },
+                'idParrain' => function ($query) {
+                    $query->select('id', 'id');
+                },
+            ])
+            ->get();
+
+        if ($patientGodSon->isEmpty()) {
+            $patientGodSon = ["Aucun parrain enregistré"];
+        }else{
+            $patientGodSon = $patientGodSon->map(function ($patientGodSon) {
+                return [
+                    'id_filleul' => $patientGodSon->idParrain ? $patientGodSon->idParrain->id : null,
+                    'name_GodFather' => $patientGodSon->nameGodFather ? $patientGodSon->nameGodFather->nom_pat : null,
+                    'firstname_GodFather' => $patientGodSon->firstnameGodFather ? $patientGodSon->firstnameGodFather->prenom_pat : null,
+                ];
+            });
+        }
+
+
+
+
+        $result = [
+            'patientInfo' => $patientInfo,
+            'patientCalendar' => $patientCalendars,
+            'patientAppareil' => $patientAppareil,
+            'patientNote' => $patientNotes,
+            'patientMcq' => $patientMcqs,
+            'patientGodFather' => $patientGodFather,
+            'patientGodSon' => $patientGodSon,
+        ];
+        return response()->json($result);
+    }
 
 
 }

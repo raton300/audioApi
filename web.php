@@ -21,8 +21,8 @@ $router->post('/audios/new', 'AudioController@create');
 $router->get('/audios/{id}', 'AudioController@show');
 $router->put('/audios/update/{id:[0-9]+}', 'AudioController@update');
 $router->delete('/audios/delete/{id}', 'AudioController@destroy');
-$router->get('/audiogetnomid','AudioController@getNomId');
-$router->get('/audiobyemail/{email_aud}', 'AudioController@getbyemail');
+//$router->get('/audiogetnomid','AudioController@getNomId');
+//$router->get('/audiobyemail/{email_aud}', 'AudioController@getbyemail');
 
 $router->get('/patient', 'PatientController@index');
 $router->get('/patient/{id:[0-9]+}/{id_ca:[0-9]+}', 'PatientController@show');

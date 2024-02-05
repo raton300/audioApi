@@ -16,11 +16,11 @@ class Sponsorship extends Model
         return $this->belongsTo(Patient::class, 'id_pat_filleul', 'id');
     }
 
-    public function nomFilleul()
+    public function nameGodSon()
     {
         return $this->belongsTo(Patient::class, 'id_pat_filleul', 'id');
     }
-    public function prenomFilleul()
+    public function firstnameGodSon()
     {
         return $this->belongsTo(Patient::class, 'id_pat_filleul', 'id');
     }
@@ -29,11 +29,11 @@ class Sponsorship extends Model
         return $this->belongsTo(Patient::class, 'id_pat_filleul', 'id');
     }
 
-    public function nomParrain()
+    public function nameGodFather()
     {
         return $this->belongsTo(Patient::class, 'id_pat_parrain', 'id');
     }
-    public function prenomParrain()
+    public function firstnameGodFather()
     {
         return $this->belongsTo(Patient::class, 'id_pat_parrain', 'id');
     }

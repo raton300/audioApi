@@ -41,8 +41,6 @@ class AppareilController extends Controller
     {
         $this->validate($request, [
             'modele_app' => 'required',
-            'annee_app' => 'required|integer',
-            'photo_app' => 'required',
             'id_fab' => 'required|integer',
             'id_ta' => 'required|integer',
         ]);

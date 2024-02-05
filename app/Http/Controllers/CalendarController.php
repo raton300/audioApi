@@ -11,11 +11,19 @@ use DateInterval;
 class CalendarController extends Controller
 {
 
-    public function index($id_ca,$id_cab)
+    public function index($id_ca,$id_cab,Request $request)
     {
+        $start = $request->input('start');
+        $end = $request->input('end');
+
+
+        $startDate = Carbon::parse($start);
+        $endDate = Carbon::parse($end);
+
         $calendar = Calendar::with('patient')
             ->where('id_ca', $id_ca)
             ->where('cabinet', $id_cab)
+            ->whereBetween('start_cal', [$startDate, $endDate])
             ->get();
 
         $calendar->map(function ($item) {
@@ -72,7 +80,7 @@ class CalendarController extends Controller
             'start_cal' => 'required',
             'end_cal' => 'required',
             'backgroundColor' => 'required',
-            'categorie_cal' => 'required',
+            'appointmentTypeCal' => 'required',
             'id_ca' => 'required',
             'cabinet' => 'required',
         ]);
@@ -80,12 +88,18 @@ class CalendarController extends Controller
         try {
             $calendar = new Calendar();
 
+            if ($request->json('id_pat')===''){
+                $id_pat = null;
+            }else{
+                $id_pat = $request->json('id_pat');
+            }
+
             // Convertissez les valeurs JSON en objets DateTime
             $calendar->start_cal =$request->json('start_cal');
             $calendar->end_cal = $request->json('end_cal');
             $calendar->backgroundColor = $request->json('backgroundColor');
-            $calendar->id_pat = $request->json('id_pat');
-            $calendar->categorie_cal = $request->json('categorie_cal');
+            $calendar->id_pat = $id_pat;
+            $calendar->categorie_cal = $request->json('appointmentTypeCal');
             $calendar->description_cal = $request->json('description_cal');
             $calendar->id_ca = $request->json('id_ca');
             $calendar->cabinet = $request->json('cabinet');
@@ -183,7 +197,7 @@ class CalendarController extends Controller
     public function calendarPatient($id_pat)
     {
         $calendars = Calendar::where('id_pat', $id_pat)
-            ->orderBy('start_cal', 'desc') // Tri par date de manière décroissante
+            ->orderBy('start_cal', 'desc')
             ->get();
 
         return response()->json($calendars);
